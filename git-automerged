@@ -6,14 +6,22 @@
 PearentNum=$(echo $(git log $1 -1 --pretty=format:"%P" | wc -w))
 
 #中間ファイル名の設定
-TEMP_MERGED="/tmp/merged.$$"
-TEMP_MERGED_SORTED="/tmp/merged_sorted.$$"
-TEMP_AUTOMERGED="/tmp/automerged.$$"
+TEMP_DIR="/tmp/merged.$$"
+mkdir -p $TEMP_DIR
+TEMP_MERGED="$TEMP_DIR/merged.$$"
+TEMP_MERGED_SORTED="$TEMP_DIR/merged_sorted.$$"
+TEMP_AUTOMERGED="$TEMP_DIR/automerged.$$"
+
+#終了時に中間ファイルを削除するよう設定
+trap 'rm -r ${TEMP_DIR}' 0
 
 #merge commitかチェック
 if [ $PearentNum -gt 1 ] ; then
 	#親が2以上(merge commitの場合)
 	#入力されたコミットとその親との差分が存在するファイル名からmergeが行われたファイルを列挙
+
+	#同名ファイルが万が一存在した時のために $TEMP_MERGED を初期化
+	cp /dev/null $TEMP_MERGED
 
 	#親の数だけループ
 	i=1
@@ -21,28 +29,23 @@ if [ $PearentNum -gt 1 ] ; then
 	do
 		#一応親のハッシュを出力しておく
 		echo "Pearent $i : $Pearent"
-		git diff --name-only $1 $Pearent >> TEMP_MERGED
+		git diff --name-only $1 $Pearent >> $TEMP_MERGED
 		i=$(expr $i + 1)
 	done
 
 	#mergeされたファイルのソート
-	sort TEMP_MERGED > TEMP_MERGED_SORTED
+	sort $TEMP_MERGED > $TEMP_MERGED_SORTED
 	
 	#重複しているファイルの抽出
-	uniq TEMP_MERGED_SORTED --repeated > TEMP_AUTOMERGED
+	uniq $TEMP_MERGED_SORTED --repeated > $TEMP_AUTOMERGED
 	
 	#重複しているファイルがあれば出力
-	if [ -s TEMP_AUTOMERGED ] ; then
+	if [ -s $TEMP_AUTOMERGED ] ; then
 		echo "automerged file name"
-		cat TEMP_AUTOMERGED
+		cat $TEMP_AUTOMERGED
 	else
 		echo "no automerge"
 	fi
-
-	#中間ファイルの削除
-	rm TEMP_MERGED
-	rm TEMP_MERGED_SORTED
-	rm TEMP_AUTOMERGED
 
 else
 	#親が2以上いないなら処理を終了
