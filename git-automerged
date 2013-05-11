@@ -9,7 +9,6 @@ PearentNum=$(echo $(git log $1 -1 --pretty=format:"%P" | wc -w))
 TEMP_DIR="/tmp/merged.$$"
 mkdir -p $TEMP_DIR
 TEMP_MERGED="$TEMP_DIR/merged.$$"
-TEMP_MERGED_SORTED="$TEMP_DIR/merged_sorted.$$"
 TEMP_AUTOMERGED="$TEMP_DIR/automerged.$$"
 
 #終了時に中間ファイルを削除するよう設定
@@ -33,11 +32,8 @@ if [ $PearentNum -gt 1 ] ; then
 		i=$(expr $i + 1)
 	done
 
-	#mergeされたファイルのソート
-	sort $TEMP_MERGED > $TEMP_MERGED_SORTED
-	
-	#重複しているファイルの抽出
-	uniq $TEMP_MERGED_SORTED --repeated > $TEMP_AUTOMERGED
+	#mergeされたファイルをソートし、重複ファイルを抽出
+	sort $TEMP_MERGED | uniq --repeated > $TEMP_AUTOMERGED
 	
 	#重複しているファイルがあれば出力
 	if [ -s $TEMP_AUTOMERGED ] ; then
