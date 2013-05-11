@@ -1,0 +1,36 @@
+#! /bin/bash
+#引数としてコミットの ハッシュ HEAD HEAD^ 等のmergeコミットを一つ入力
+#automergeが起きたファイルを全て表示
+
+#入力されたコミットの親の数を確認
+PearentNum=$(echo $(git log $1 -1 --pretty=format:"%P" | wc -w))
+
+#mergedファイルの初期化
+echo -n "" > ~/tmp/merged
+
+#merge commitかチェック
+if [ $PearentNum -gt 1 ] ; then
+	#親が2以上(merge commitの場合)
+	#入力されたコミットとその親との差分が存在するファイル名からmergeが行われたファイルを列挙
+
+	#親の数だけループ
+	i=1
+	for Pearent in $(git log $1 -1 --pretty=format:"%P")
+	do
+		#一応親のハッシュを出力しておく
+		echo "Pearent $i : $Pearent"
+		git diff --name-only $1 $Pearent >> ~/tmp/merged
+		i=$(expr $i + 1)
+	done
+
+	#mergeされたファイルのソート
+	sort ~/tmp/merged > ~/tmp/merged-sorted
+	
+	#重複しているファイルの出力
+	uniq ~/tmp/merged-sorted --repeated > ~/tmp/automerged
+	cat ~/tmp/automerged
+
+else
+	#親が2以上いないなら処理を終了
+	echo "$1 is not MergeCommit"
+fi
