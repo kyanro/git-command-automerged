@@ -37,7 +37,7 @@ if [ $PearentNum -gt 1 ] ; then
 	
 	#重複しているファイルがあれば出力
 	if [ -s $TEMP_AUTOMERGED ] ; then
-		echo "automerged file name"
+		echo " *automerged file name"
 		cat $TEMP_AUTOMERGED
 	else
 		echo "no automerge"
