@@ -5,8 +5,10 @@
 #入力されたコミットの親の数を確認
 PearentNum=$(echo $(git log $1 -1 --pretty=format:"%P" | wc -w))
 
-#mergedファイルの初期化
-echo -n "" > ~/tmp/merged
+#中間ファイル名の設定
+TEMP_MERGED="/tmp/merged.$$"
+TEMP_MERGED_SORTED="/tmp/merged_sorted.$$"
+TEMP_AUTOMERGED="/tmp/automerged.$$"
 
 #merge commitかチェック
 if [ $PearentNum -gt 1 ] ; then
@@ -19,18 +21,31 @@ if [ $PearentNum -gt 1 ] ; then
 	do
 		#一応親のハッシュを出力しておく
 		echo "Pearent $i : $Pearent"
-		git diff --name-only $1 $Pearent >> ~/tmp/merged
+		git diff --name-only $1 $Pearent >> TEMP_MERGED
 		i=$(expr $i + 1)
 	done
 
 	#mergeされたファイルのソート
-	sort ~/tmp/merged > ~/tmp/merged-sorted
+	sort TEMP_MERGED > TEMP_MERGED_SORTED
 	
-	#重複しているファイルの出力
-	uniq ~/tmp/merged-sorted --repeated > ~/tmp/automerged
-	cat ~/tmp/automerged
+	#重複しているファイルの抽出
+	uniq TEMP_MERGED_SORTED --repeated > TEMP_AUTOMERGED
+	
+	#重複しているファイルがあれば出力
+	if [ -s TEMP_AUTOMERGED ] ; then
+		echo "automerged file name"
+		cat TEMP_AUTOMERGED
+	else
+		echo "no automerge"
+	fi
+
+	#中間ファイルの削除
+	rm TEMP_MERGED
+	rm TEMP_MERGED_SORTED
+	rm TEMP_AUTOMERGED
 
 else
 	#親が2以上いないなら処理を終了
-	echo "$1 is not MergeCommit"
+	echo "$(git log $1 -1 --pretty=format:"%P") is not MergeCommit"
 fi
+
