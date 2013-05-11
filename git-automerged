@@ -44,7 +44,7 @@ if [ $PearentNum -gt 1 ] ; then
 	fi
 
 else
-	#親が2以上いないなら処理を終了
-	echo "$(git log $1 -1 --pretty=format:"%P") is not MergeCommit"
+	#親が2以上いないなら入力されたハッシュを出力して処理を終了
+	echo "$(git log $1 -1 --pretty=format:"%H") is not Merge　Commit"
 fi
 
